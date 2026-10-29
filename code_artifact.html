@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>邦ロックバンド診断</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=RocknRoll+One&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        background: '#121212',
+                        textMain: '#ffffff',
+                        neonBlue: '#00f3ff',
+                        neonGreen: '#39ff14',
+                        surface: '#1e1e1e'
+                    },
+                    fontFamily: {
+                        sans: ['"Noto Sans JP"', 'sans-serif'],
+                        rock: ['"RocknRoll One"', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .neon-text-blue {
+            text-shadow: 0 0 5px #00f3ff, 0 0 10px #00f3ff, 0 0 20px #00f3ff;
+        }
+
+        .neon-border-blue {
+            border: 2px solid #00f3ff;
+            box-shadow: 0 0 10px #00f3ff, inset 0 0 10px #00f3ff;
+            transition: all 0.3s ease;
+        }
+        .neon-border-blue:hover, .neon-border-blue:active {
+            background-color: rgba(0, 243, 255, 0.1);
+            box-shadow: 0 0 20px #00f3ff, inset 0 0 20px #00f3ff;
+        }
+
+        .neon-border-green {
+            border: 2px solid #39ff14;
+            box-shadow: 0 0 10px #39ff14, inset 0 0 10px #39ff14;
+            transition: all 0.3s ease;
+        }
+        .neon-border-green:hover, .neon-border-green:active {
+            background-color: rgba(57, 255, 20, 0.1);
+            box-shadow: 0 0 20px #39ff14, inset 0 0 20px #39ff14;
+        }
+
+        .choice-btn {
+            transition: all 0.2s ease;
+        }
+        .choice-btn:active {
+            transform: scale(0.98);
+        }
+        
+        /* 画面のフェード切り替え用 */
+        .screen {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease-in-out;
+        }
+        .screen.active {
+            display: flex;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center font-sans overflow-x-hidden">
+
+    <!-- メインコンテナ (モバイルファースト) -->
+    <div class="w-full max-w-md min-h-[100dvh] flex flex-col relative px-4 py-8 bg-background shadow-2xl overflow-y-auto">
+
+        <!-- ▼トップ画面 -->
+        <div id="screen-top" class="screen active flex-col items-center justify-center flex-grow text-center">
+            <h1 class="font-rock text-4xl md:text-5xl font-bold mb-4 neon-text-blue leading-tight py-4">
+                邦ロック<br>バンド診断
+            </h1>
+            <p class="text-gray-300 text-sm md:text-base mb-12 px-4 leading-relaxed">
+                6つの軸からあなたの性格を分析し、<br>
+                全99組の中からあなたを投影している<br>
+                バンドを導き出します。
+            </p>
+            
+            <button onclick="startTest()" class="neon-border-blue text-white font-bold py-4 px-10 rounded-full text-lg w-4/5 mb-6 tracking-wider">
+                診断を始める
+            </button>
+            
+            <button onclick="shareSNS('top')" class="flex items-center justify-center gap-2 text-gray-400 hover:text-white transition-colors py-2 px-4">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
+                SNSに共有する
+            </button>
+        </div>
+
+        <!-- ▼質問画面 -->
+        <div id="screen-question" class="screen flex-col items-center flex-grow w-full">
+            <div class="w-full flex justify-between items-center mb-8 px-2 mt-4">
+                <span class="text-neonBlue font-rock text-xl">Q<span id="q-number">1</span></span>
+                <span class="text-gray-400 text-sm font-bold tracking-widest"><span id="q-current">1</span> / 30</span>
+            </div>
+            
+            <!-- プログレスバー -->
+            <div class="w-full bg-gray-800 h-1.5 rounded-full mb-10 overflow-hidden">
+                <div id="q-progress-bar" class="h-full bg-neonBlue transition-all duration-300 ease-out" style="width: 0%"></div>
+            </div>
+
+            <div class="flex-grow flex items-center justify-center w-full mb-10 min-h-[120px]">
+                <h2 id="q-text" class="text-xl md:text-2xl font-bold text-center leading-relaxed px-2 text-white">
+                    質問テキストがここに入ります。
+                </h2>
+            </div>
+
+            <div class="w-full flex flex-col gap-3 mt-auto mb-4">
+                <button onclick="answerQuestion(2)" class="choice-btn bg-surface hover:bg-gray-700 border border-gray-600 rounded-xl py-4 px-6 text-center font-bold text-white text-lg">そう</button>
+                <button onclick="answerQuestion(1)" class="choice-btn bg-surface hover:bg-gray-700 border border-gray-600 rounded-xl py-4 px-6 text-center font-bold text-gray-200">どちらかといえばそう</button>
+                <button onclick="answerQuestion(0)" class="choice-btn bg-surface hover:bg-gray-700 border border-gray-600 rounded-xl py-3 px-6 text-center font-medium text-gray-400 text-sm">わからない</button>
+                <button onclick="answerQuestion(-1)" class="choice-btn bg-surface hover:bg-gray-700 border border-gray-600 rounded-xl py-4 px-6 text-center font-bold text-gray-200">どちらかといえばちがう</button>
+                <button onclick="answerQuestion(-2)" class="choice-btn bg-surface hover:bg-gray-700 border border-gray-600 rounded-xl py-4 px-6 text-center font-bold text-white text-lg">違う</button>
+            </div>
+        </div>
+
+        <!-- ▼結果画面 -->
+        <div id="screen-result" class="screen flex-col items-center justify-center flex-grow text-center w-full py-6">
+            <p class="text-gray-300 text-sm mb-2 tracking-widest">あなたを投影しているバンドは</p>
+            
+            <div class="w-full py-12 px-4 relative mb-6">
+                <!-- 装飾 -->
+                <div class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 bg-neonBlue opacity-20 blur-3xl rounded-full"></div>
+                
+                <h2 id="result-band-name" class="font-rock text-4xl md:text-5xl font-bold neon-text-blue leading-tight relative z-10 break-words">
+                    バンド名
+                </h2>
+            </div>
+            
+            <div class="bg-surface border border-gray-700 rounded-2xl p-6 w-full mb-10 shadow-lg relative z-10 text-left">
+                <p id="result-band-desc" class="text-gray-200 text-base md:text-lg leading-relaxed font-medium">
+                    バンドの説明文がここに入ります。
+                </p>
+            </div>
+
+            <button onclick="shareSNS('result')" class="neon-border-green bg-[#121212] text-white font-bold py-4 px-6 rounded-full text-lg w-full mb-4 flex items-center justify-center gap-3">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
+                結果をSNSにシェアする
+            </button>
+            
+            <button onclick="restartTest()" class="text-gray-400 hover:text-white underline py-4 mt-2 transition-colors">
+                もう一度診断する
+            </button>
+        </div>
+
+    </div>
+
+    <!-- JavaScript ロジック -->
+    <script>
+        // --- 1. データ定義 ---
+
+        // ユーザーのスコア状態
+        let userScores = {
+            emotion: 0, world: 0, sound: 0, team: 0, romance: 0, style: 0
+        };
+        let currentQuestionIndex = 0;
+        let resultBandData = null;
+
+        // 質問リスト（全30問）
+        const questions = [
+            // 感情軸
+            { text: "感情を内に秘めるより外に爆発させる方がスッキリするタイプだ。", axis: "emotion", polarity: 1 },
+            { text: "怒りや反骨心を原動力にして頑張れるタイプだ。", axis: "emotion", polarity: 1 },
+            { text: "休みの日は熱狂できるライブより静かなカフェで過ごしたい。", axis: "emotion", polarity: -1 },
+            { text: "理不尽なことには声を上げて立ち向かいたい。", axis: "emotion", polarity: 1 },
+            { text: "激しい音楽よりも心が落ち着く心地よいメロディが好きだ。", axis: "emotion", polarity: -1 },
+            // 世界観軸
+            { text: "人間の「影」の部分や、少し病んだ世界観に惹かれる。", axis: "world", polarity: -1 },
+            { text: "悩み事がある時は誰かに相談するより一人で深く考え込みたい。", axis: "world", polarity: -1 },
+            { text: "みんなで笑顔になれるような、底抜けに明るい雰囲気が好きだ。", axis: "world", polarity: 1 },
+            { text: "世の中の当たり前や常識に対して、どこか冷めた目を持っている。", axis: "world", polarity: -1 },
+            { text: "音楽にはメッセージ性よりも「楽しさ」や「ハッピーさ」を求める。", axis: "world", polarity: 1 },
+            // サウンド軸
+            { text: "音楽を聴くと自然と体が動いたりリズムに乗りたくなる。", axis: "sound", polarity: -1 },
+            { text: "ギターの生のバンドサウンドを聴くと血が騒ぐ。", axis: "sound", polarity: 1 },
+            { text: "最新のトレンドやSNSで流行っている曲はすぐにチェックする。", axis: "sound", polarity: -1 },
+            { text: "ボカロやネット発の音楽カルチャーに親しみがある。", axis: "sound", polarity: -1 },
+            { text: "ライブハウスの汗臭いような熱気が好きだ。", axis: "sound", polarity: 1 },
+            // 体制軸
+            { text: "「みんなで仲良く」よりも一匹狼でいる方が性に合っている。", axis: "team", polarity: -1 },
+            { text: "仲間やチームで連携して一つの大きなことを成し遂げるのが好きだ。", axis: "team", polarity: 1 },
+            { text: "複数の人が一糸乱れぬパフォーマンスをしているのを見ると感動する。", axis: "team", polarity: 1 },
+            { text: "自分の弱さを隠さず、ありのままを一人で表現している人に憧れる。", axis: "team", polarity: -1 },
+            { text: "「絆」や「友情」という言葉に弱い。", axis: "team", polarity: 1 },
+            // 恋愛軸
+            { text: "恋愛においては嫉妬深かったり、引きずりやすいタイプだ。", axis: "romance", polarity: -1 },
+            { text: "綺麗事ではない、人間のドロドロした感情を歌った曲に共感する。", axis: "romance", polarity: -1 },
+            { text: "日常の些細な幸せや、ふとした瞬間の景色を大切にしている。", axis: "romance", polarity: 1 },
+            { text: "映画や小説など、切なくて泣けるピュアなストーリーが好きだ。", axis: "romance", polarity: 1 },
+            { text: "報われない恋愛や、ダメだと分かっている関係に共感してしまう。", axis: "romance", polarity: -1 },
+            // スタイル軸
+            { text: "泥臭い努力よりもスマートで洗練されたかっこよさに憧れる。", axis: "style", polarity: -1 },
+            { text: "おしゃれで都会的な雰囲気の音楽が好きだ。", axis: "style", polarity: -1 },
+            { text: "不器用でもがむしゃらに頑張っている姿を見ると応援したくなる。", axis: "style", polarity: 1 },
+            { text: "「青春」という言葉の響きにグッとくる。", axis: "style", polarity: 1 },
+            { text: "ファッションやビジュアルの完成度もアーティストの重要な魅力だと思う。", axis: "style", polarity: -1 }
+        ];
+
+        // 全99組のバンドリストの生テキスト
+        const rawBandsText = [
+            "Omoinotake：島根県発のピアノ・トリオバンド。",
+            "キュウソネコカミ：ユーモアと社会風刺を交えた楽曲が特徴のロックバンド。",
+            "櫻坂46：激しいダンスパフォーマンスが魅力のアイドルグループ。",
+            "シャイトープ：日常を切り取る歌詞が人気のギターロックバンド。",
+            "SUPER BEAVER：ストレートなメッセージを届ける実力派ロックバンド。",
+            "SKY-HI：BMSG代表を務めるラッパー・シンガー。",
+            "Da-iCE：圧倒的なツインボーカルが魅力のダンス＆ボーカルグループ。",
+            "TWS：韓国のフレッシュな6人組ボーイズグループ。",
+            "NiziU：日本から世界へ羽ばたく大人気グローバルガールズグループ。",
+            "Vaundy：ジャンルレスな楽曲を生み出すマルチアーティスト。",
+            "Furui Riho：R&Bやゴスペルをルーツに持つシンガーソングライター。",
+            "BOYNEXTDOOR：韓国の次世代実力派ボーイズグループ。",
+            "宮野真守：トップ声優であり、高い表現力を持つシンガー。",
+            "ヤングスキニー：若者のリアルな感情を赤裸々に歌うロックバンド。",
+            "『ユイカ』：10代を中心に共感を集める女性シンガーソングライター。",
+            "緑仙：高い歌唱力を持つ「にじさんじ」所属のVTuber。",
+            "レトロリロン：哀愁あるメロディを奏でるオルタナティブポップバンド。",
+            "弌誠：独特な低音ボイスと世界観を持つシンガーソングライター。",
+            "UVERworld：熱狂的な支持を集めるミクスチャーロックバンド。",
+            "Awich：日本のヒップホップシーンを牽引するカリスマラッパー。",
+            "かいりきベア：中毒性のあるアップテンポなメロディで人気のボカロP。",
+            "キタニタツヤ：卓越したベースとダークな世界観を持つシンガーソングライター。",
+            "CUTIE STREET：アソビシステム所属の注目のアイドルグループ。",
+            "CLAN QUEEN：映像美と音楽を高い次元で融合させるクリエイティブユニット。",
+            "Creepy Nuts：超絶スキルのラッパーとDJによる大人気ヒップホップユニット。",
+            "KEIJU：KANDYTOWN出身のスタイリッシュなラッパー。",
+            "Chevon：札幌発の注目オルタナティブロックバンド。",
+            "須田景凪：ボカロP「バルーン」としても知られるシンガーソングライター。",
+            "Dannie May：美しいコーラスワークが魅力のボーカルユニット。",
+            "NEE：エキゾチックなサウンドが特徴のロックバンド。",
+            "煮ル果実：独特なストーリー性を持つ楽曲を手掛けるボカロP。",
+            "マカロニえんぴつ：全世代から愛されるエモーショナルなロックバンド。",
+            "LANA：Z世代から圧倒的支持を得るヒップホップシンガー。",
+            "LE SSERAFIM：圧倒的なパフォーマンス力を持つ多国籍ガールズグループ。",
+            "Reol：エッジの効いたボーカルとサウンドで魅せる女性アーティスト。",
+            "アイナ・ジ・エンド：唯一無二のハスキーボイスと表現力が魅力のアーティスト。",
+            "amazarashi：独自のポエトリーリーディングとロックを融合させたバンド。",
+            "アンジュルム：ハロー！プロジェクト所属のパワフルなアイドルグループ。",
+            "CANDY TUNE：アソビシステム所属のキュートなアイドルグループ。",
+            "クリープハイプ：ハイトーンボイスと文学的な歌詞が人気のロックバンド。",
+            "コレサワ：クマのキャラクターで顔を隠して活動するシンガーソングライター。",
+            "サカナクション：ダンスミュージックとロックを高度に融合させたバンド。",
+            "This is LAST：切ない恋愛模様を歌う3ピースロックバンド。",
+            "にしな：儚くも力強い独特の歌声を持つシンガーソングライター。",
+            "NEXZ：JYPエンターテインメント所属のグローバルボーイズグループ。",
+            "ねぐせ。：笑顔が似合うハッピーな4ピースバンド。",
+            "ハルカミライ：ライブハウスを沸かせる直球のパンクロックバンド。",
+            "BAND-MAID：メイド服で本格的なハードロックを鳴らす世界的バンド。",
+            "Hump Back：大阪発のストレートな3ピースガールズロックバンド。",
+            "HERO COMPLEX：福岡発のメロディックパンクバンド。",
+            "berry meet：透明感のあるボーカルが魅力の3ピースバンド。",
+            "My Hair is Bad：赤裸々な歌詞とエモーショナルなライブが魅力のバンド。",
+            "マルシィ：等身大の恋愛ソングで若者から共感を集めるロックバンド。",
+            "moon drop：愛知発のラブソングを真っ直ぐに歌うロックバンド。",
+            "礼賛：サーヤ（ラランド）がボーカルを務めるヒップホップバンド。",
+            "AKASAKI：10代から熱い注目を集める現役高校生シンガーソングライター。",
+            "ASIAN KUNG-FU GENERATION：日本のギターロックシーンを牽引し続ける重鎮バンド。",
+            "ACIDMAN：壮大な世界観と「生命」をテーマにしたロックバンド。",
+            "新しい学校のリーダーズ：個性的なダンスとパフォーマンスで世界を席巻するグループ。",
+            "[Alexandros]：スタイリッシュでスケールの大きなロックを鳴らすバンド。",
+            "KANA-BOON：キャッチーなメロディと疾走感が特徴のロックバンド。",
+            "サンボマスター：熱いメッセージと圧倒的な熱量で観客を鼓舞するスリーピースバンド。",
+            "shallm：気鋭の女性ボーカリストによる音楽プロジェクト。",
+            "スキマスイッチ：珠玉のポップスを生み出し続ける実力派音楽ユニット。",
+            "ストレイテナー：美しいメロディと高い演奏力を持つオルタナティヴ・ロックバンド。",
+            "sumika：聴く人を笑顔にするポップで温かい楽曲が魅力のロックバンド。",
+            "DXTEEN：JO1やINIの弟分にあたるグローバルボーイズグループ。",
+            "TOMOO：低音の響くアルトボイスが魅力のシンガーソングライター。",
+            "羊文学：繊細なノイズギターと透き通るボーカルのオルタナティブロックバンド。",
+            "ヒトリエ：高速かつ複雑なバンドアンサンブルが持ち味のロックバンド。",
+            "flumpool：爽やかなメロディと王道ポップスを奏でるバンド。",
+            "Base Ball Bear：独自のギターサウンドと文学的な歌詞が魅力のバンド。",
+            "離婚伝説：良質なグッドミュージックを奏でる注目の2人組ユニット。",
+            "ロクデナシ：ボーカル「にんじん」を中心とした気鋭の音楽プロジェクト。",
+            "秋山黄色：激情的なライブと鋭いサウンドが武器のシンガーソングライター。",
+            "ano：唯一無二のキャラクターと中毒性のある音楽で大ブレイク中のアーティスト。",
+            "おいしくるメロンパン：独特な世界観の歌詞と変拍子を交えたギターロックバンド。",
+            "THE ORAL CIGARETTES：色気のあるボーカルとダークなロックサウンドが魅力のバンド。",
+            "川崎鷹也：温かい歌声とアコースティックギターの音色が魅力のシンガー。",
+            "9mm Parabellum Bullet：轟音と激しいライブパフォーマンスが持ち味のロックバンド。",
+            "KUZIRA：岐阜発の本格派メロディックパンクバンド。",
+            "佐野元春 & THE COYOTE BAND：日本のロックシーンのレジェンドとそのバックバンド。",
+            "サバシスター：飾らない等身大の歌詞が人気のガールズロックバンド。",
+            "シンガーズハイ：ハイトーンボーカルとソリッドなギターが特徴のロックバンド。",
+            "ずっと真夜中でいいのに。：謎多きボーカルACAねを中心とした音楽ユニット。",
+            "センチミリメンタル：温野水音によるソロプロジェクト。",
+            "Tele：谷口喜多朗のソロプロジェクトである注目のシンガー。",
+            "仲井戸\"CHABO\"麗市：RCサクセションなどで活躍した日本を代表するロックギタリスト。",
+            "なとり：「Overdose」で大ブレイクした気鋭のマルチクリエイター。",
+            "NELKE：繊細な歌声と美しいメロディを奏でる次世代バンド。",
+            "PEOPLE 1：多彩なジャンルを横断する変幻自在なポップバンド。",
+            "04 Limited Sazabys：ハイトーンボイスと疾走感あふれるメロコアバンド。",
+            "BLUE ENCOUNT：感情をストレートにぶつけるエモーショナルなロックバンド。",
+            "HEY-SMITH：ホーンセクションを擁する熱いスカパンクバンド。",
+            "Maki：名古屋発の熱量あふれるライブが持ち味のロックバンド。",
+            "マキシマム ザ ホルモン：ハードコアやメタルを独自のポップセンスで昇華した世界的バンド。",
+            "め組：菅原達也を中心に結成されたキャッチーなポップスバンド。",
+            "WurtS：ジャンルレスな楽曲を生み出す覆面のオルタナティブ・ロック・アーティスト。"
+        ];
+
+        // 生テキストから配列データ（パラメータ付き）を生成
+        // （要件通り、各軸に -10 〜 10 のランダム値を設定）
+        // 毎回ランダムだと同じ回答でも結果が変わるため、乱数シード的役割として文字列のハッシュを利用して固定の疑似乱数を生成します。
+        function hashCode(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = ((hash << 5) - hash) + str.charCodeAt(i);
+                hash |= 0; 
+            }
+            return hash;
+        }
+
+        function pseudoRandom(seed) {
+            let x = Math.sin(seed++) * 10000;
+            return x - Math.floor(x);
+        }
+
+        const bands = rawBandsText.map(line => {
+            const [name, desc] = line.split("：");
+            let seed = hashCode(name);
+            
+            // -10 から 10 までの疑似ランダムな整数を生成
+            const getRandParam = () => Math.floor(pseudoRandom(seed++) * 21) - 10;
+            
+            return {
+                name: name,
+                description: desc,
+                scores: {
+                    emotion: getRandParam(),
+                    world: getRandParam(),
+                    sound: getRandParam(),
+                    team: getRandParam(),
+                    romance: getRandParam(),
+                    style: getRandParam()
+                }
+            };
+        });
+
+        // --- 2. 画面制御ロジック ---
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(el => {
+                el.classList.remove('active');
+                // アニメーションのためのタイムアウト
+                setTimeout(() => {
+                    if(!el.classList.contains('active')) el.style.display = 'none';
+                }, 400); 
+            });
+            
+            const target = document.getElementById(screenId);
+            target.style.display = 'flex';
+            // リフローを強制
+            void target.offsetWidth; 
+            target.classList.add('active');
+        }
+
+        function startTest() {
+            // スコアとインデックスをリセット
+            userScores = { emotion: 0, world: 0, sound: 0, team: 0, romance: 0, style: 0 };
+            currentQuestionIndex = 0;
+            renderQuestion();
+            showScreen('screen-question');
+            window.scrollTo(0, 0);
+        }
+
+        function renderQuestion() {
+            const q = questions[currentQuestionIndex];
+            
+            // DOM更新
+            document.getElementById('q-number').textContent = currentQuestionIndex + 1;
+            document.getElementById('q-current').textContent = currentQuestionIndex + 1;
+            document.getElementById('q-text').textContent = q.text;
+            
+            // プログレスバー更新
+            const progressPercent = (currentQuestionIndex / questions.length) * 100;
+            document.getElementById('q-progress-bar').style.width = `${progressPercent}%`;
+        }
+
+        function answerQuestion(point) {
+            const q = questions[currentQuestionIndex];
+            
+            // 極性に合わせてスコアを加算
+            const actualPoint = point * q.polarity;
+            userScores[q.axis] += actualPoint;
+
+            currentQuestionIndex++;
+
+            if (currentQuestionIndex >= questions.length) {
+                calculateResult();
+            } else {
+                renderQuestion();
+            }
+        }
+
+        // ユークリッド距離を用いた判定
+        function calculateResult() {
+            let bestBand = null;
+            let minDistance = Infinity;
+
+            bands.forEach(band => {
+                // 6軸それぞれの差の2乗を合計する（平方根は省略しても大小関係は変わらないため、そのまま比較）
+                let distanceSq = 0;
+                for (const axis in userScores) {
+                    const diff = userScores[axis] - band.scores[axis];
+                    distanceSq += diff * diff;
+                }
+
+                if (distanceSq < minDistance) {
+                    minDistance = distanceSq;
+                    bestBand = band;
+                }
+            });
+
+            // 結果画面の表示更新
+            resultBandData = bestBand;
+            document.getElementById('result-band-name').textContent = bestBand.name;
+            document.getElementById('result-band-desc').textContent = bestBand.description;
+            
+            // 進行度バーを100%にする
+            document.getElementById('q-progress-bar').style.width = '100%';
+            
+            setTimeout(() => {
+                showScreen('screen-result');
+                window.scrollTo(0, 0);
+            }, 300); // 最後の回答後、わずかに待ってから切り替え
+        }
+
+        function restartTest() {
+            showScreen('screen-top');
+            window.scrollTo(0, 0);
+        }
+
+        function shareSNS(source) {
+            let text = "";
+            const url = window.location.href; // 実際の公開URLが入ります
+            const hashtag = "#邦ロックバンド診断";
+
+            if (source === 'top') {
+                text = "全99組からあなたを投影しているバンドがわかる「邦ロックバンド診断」！";
+            } else if (source === 'result' && resultBandData) {
+                text = `私の邦ロックバンド診断結果は「${resultBandData.name}」でした！\n${resultBandData.description}`;
+            }
+
+            const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text + '\n' + hashtag)}&url=${encodeURIComponent(url)}`;
+            window.open(twitterUrl, '_blank');
+        }
+
+    </script>
+</body>
+</html>
